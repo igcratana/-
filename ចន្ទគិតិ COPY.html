@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ប្រតិទិនចន្ទគតិខ្មែរស្វ័យប្រវត្តិ</title>
+    <!-- ទាញយក MomentKH (Khmer Calendar Library) -->
+    <script src="https://cdn.jsdelivr.net/gh/ThyrithSor/momentkh@3.0.3/momentkh.js"></script>
+    <style>
+        body {
+            font-family: 'Kantumruy Pro', 'Khmer OS Battambang', sans-serif;
+            padding: 20px;
+            background-color: #f4f6f8;
+        }
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .filter-box {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        select, input {
+            font-size: 16px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        li {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 15px;
+            line-height: 1.6;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+            user-select: none;
+        }
+        li:nth-child(even) {
+            background-color: #f9fafb;
+        }
+        li:hover {
+            background-color: #e8f0fe;
+        }
+        
+        /* ពណ៌បៃតង ពេលចុចលើកដំបូង */
+        li.copied {
+            background-color: #d4edda !important;
+            color: #155724;
+            font-weight: bold;
+        }
+        
+        /* ពណ៌ក្រហម ពេលចុចម្ដងទៀត */
+        li.uncopied {
+            background-color: #f8d7da !important;
+            color: #721c24;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>ជ្រើសរើស ខែ និង ឆ្នាំ ដើម្បីមើលចន្ទគតិ</h2>
+    
+    <div class="filter-box">
+        <div>
+            <label for="monthSelect">ខែ៖ </label>
+            <select id="monthSelect" onchange="renderCalendar()">
+                <option value="0">មករា (January)</option>
+                <option value="1">កុម្ភៈ (February)</option>
+                <option value="2">មីនា (March)</option>
+                <option value="3">មេសា (April)</option>
+                <option value="4">ឧសភា (May)</option>
+                <option value="5">មិថុនា (June)</option>
+                <option value="6">កក្កដា (July)</option>
+                <option value="7">សីហា (August)</option>
+                <option value="8" selected>កញ្ញា (September)</option>
+                <option value="9">តុលា (October)</option>
+                <option value="10">វិច្ឆិកា (November)</option>
+                <option value="11">ធ្នូ (December)</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="yearInput">ឆ្នាំ៖ </label>
+            <input type="number" id="yearInput" value="2026" min="1900" max="2100" onchange="renderCalendar()">
+        </div>
+    </div>
+
+    <ul id="calendarList"></ul>
+</div>
+
+<script>
+const khmerMonths = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
+const khmerNumbers = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
+
+function toKhmerNum(num) {
+    if (num === undefined || num === null) return '';
+    return num.toString().split('').map(n => khmerNumbers[n] || n).join('');
+}
+
+function renderCalendar() {
+    const month = parseInt(document.getElementById('monthSelect').value);
+    const year = parseInt(document.getElementById('yearInput').value);
+    const calendarList = document.getElementById('calendarList');
+    
+    calendarList.innerHTML = '';
+
+    const totalDays = new Date(year, month + 1, 0).getDate();
+
+    for (let day = 1; day <= totalDays; day++) {
+        const date = new Date(year, month, day);
+        
+        let lunarStr = "";
+        if (typeof momentkh !== 'undefined') {
+            const khmerObj = momentkh.fromDate(date);
+            lunarStr = momentkh.format(khmerObj);
+        } else {
+            lunarStr = "មិនអាចទាញយកទិន្នន័យបាន";
+        }
+
+        const solarDay = toKhmerNum(day);
+        const solarMonth = khmerMonths[month];
+        const solarYear = toKhmerNum(year);
+
+        // ដកវង់ក្រចក ( ) ចេញពីទម្រង់បង្ហាញ
+        const resultText = `${lunarStr} មណ្ឌលគិរី, ថ្ងៃទី${solarDay} ខែ${solarMonth} ឆ្នាំ${solarYear}`;
+
+        const li = document.createElement('li');
+        li.textContent = resultText;
+
+        // បន្ថែម Event ចុចដើម្បី Copy និងប្តូរពណ៌ឆ្លាស់គ្នា
+        li.addEventListener('click', function() {
+            const textarea = document.createElement('textarea');
+            textarea.value = resultText;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+
+            try {
+                document.execCommand('copy');
+                
+                if (li.classList.contains('copied')) {
+                    li.classList.remove('copied');
+                    li.classList.add('uncopied');
+                } else {
+                    li.classList.remove('uncopied');
+                    li.classList.add('copied');
+                }
+            } catch (err) {
+                console.error('មិនអាច Copy បានទេ: ', err);
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        });
+
+        calendarList.appendChild(li);
+    }
+}
+
+window.onload = renderCalendar;
+</script>
+
+</body>
+</html>
